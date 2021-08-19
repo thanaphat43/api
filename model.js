@@ -1,6 +1,7 @@
 module.exports = {
     getList(db) {
         return db('patient AS p')
+            .select('p.*')
             .leftJoin('moph_vaccine_history_api AS m', 'm.cid', 'p.cid')
             .where('m.cid', null)
             .where('p.cid', 'not like', '010733%')

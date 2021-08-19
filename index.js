@@ -152,7 +152,7 @@ async function getList() {
     var i = 0;
     for await (const v of rs) {
         i = i + 1;
-        log('index loop: ' + i, false);
+        log(`index loop : ${i}  [CID] : ${v.cid}`, false);
         await checkImmunizationHistoryCID(v.cid);
     }
     log('[END] getList...', false);
