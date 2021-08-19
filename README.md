@@ -36,3 +36,15 @@ pm2 start ecosystem.config.js
 
 - Request failed with status code 501 คือ Invalid CID ไม่พบ CID ใน MOPH IC
 - Request failed with status code 401 คือ Too Many Request per minute เรียกใช้งานจำนวนมากเกินไป โดยแก้ไขไฟล์.env <code>URL_API_CALL_DELAY_MS</code> เพิ่มให้มากขึ้น แนะนำ 1000 (1000 = 1 วิ)
+
+#เอกสารเกี่ยวกับ MOPH Immunization Center API
+
+- https://docs.google.com/document/d/1Inyhfrte0pECsD8YoForTL2W8B2hOxezf0GpTGEjJr8/edit#
+
+#เทคนิค password_hash โดยใช้ HMACSHA256 online
+
+- เข้า website => https://www.conversion-tool.com/sha256/
+- Hash algorithm: SHA-256
+- Text to apply hash algorithm to (optional): รหัส cvp1.moph.go.th
+- HMAC hash key (optional): \$jwt@moph#
+- Output format: เลือก Hexadecimal uppercase(e.g. "AABBCCDDEEFF0011")
