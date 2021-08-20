@@ -47,6 +47,7 @@ app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
+// @ts-ignore
 app.get('/', (req, res) => res.send({ ok: true, message: 'Welcome to my api server!', code: HttpStatus.OK }));
 
 app.get('/check/:cid', async(req, res) => {
@@ -54,6 +55,7 @@ app.get('/check/:cid', async(req, res) => {
     try {
         await getToken();
         // const rs = await checkImmunizationHistoryCID(cid)
+        // @ts-ignore
         const response = await axios.get(`/api/ImmunizationHistory?cid=${cid}`, {
             headers: {
                 'Authorization': `Bearer ${_token}`,
@@ -94,6 +96,7 @@ async function checkImmunizationHistoryCID(cid) {
     try {
         // @ts-ignore
         await delay(process.env.URL_API_CALL_DELAY_MS);
+        // @ts-ignore
         const response = await axios.get(`/api/ImmunizationHistory?cid=${cid}`, {
             headers: {
                 'Authorization': `Bearer ${_token}`,
@@ -181,7 +184,7 @@ async function runJob() {
 }
 runJob();
 
-var job = new CronJob('* 1 * * *', function() {
+var job = new CronJob('* * 1 * * *', function() {
     log('Renew Token Time: ' + moment().format('DD-MM-YYYY HH:mm:ss'));
     getToken();
 }, null, true, 'Asia/Bangkok');
@@ -189,6 +192,7 @@ job.start();
 
 //error handlers
 if (process.env.NODE_ENV === 'development') {
+    // @ts-ignore
     app.use((err, req, res, next) => {
         console.log(err.stack);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
@@ -201,6 +205,7 @@ if (process.env.NODE_ENV === 'development') {
     });
 }
 
+// @ts-ignore
 app.use((req, res, next) => {
     res.status(HttpStatus.NOT_FOUND).json({
         error: {
