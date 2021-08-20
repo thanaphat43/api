@@ -144,6 +144,7 @@ async function checkImmunizationHistoryCID(cid) {
         }
         return response.data.result;
     } catch (error) {
+        await getToken();
         log('[ERROR]' + error);
     }
 }
