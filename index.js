@@ -43,6 +43,29 @@ var dbHIS = require('knex')({
 });
 
 
+var db = require('knex')({
+    client: 'mysql',
+    connection: {
+        host: process.env.DB_HOST,
+        user: process.env.DB_USER,
+        port: +process.env.DB_PORT,
+        password: process.env.DB_PASSWORD,
+        database: process.env.DB_NAME,
+        insecureAuth: true,
+    },
+    pool: {
+        min: 0,
+        max: 100,
+        afterCreate: (conn, done) => {
+            conn.query('SET NAMES utf8', (err) => {
+                done(err, conn);
+            });
+        }
+    },
+});
+
+
+
 app.use(bodyParser.json({ limit: '5mb' }));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
@@ -73,9 +96,9 @@ app.get('/check/:cid', async(req, res) => {
 
 function log(text, log = true) {
     var _text = `${moment().format('DD-MM-YYYY HH:mm:ss')} - ${text}`;
-    fs.appendFileSync('./log.log', `${_text}\n`);
+    // fs.appendFileSync('./log.log', `${_text}\n`);
     if (!log) {
-        fs.appendFileSync('./error_log.log', `${_text}\n`);
+        fs.appendFileSync('./log.log', `${_text}\n`);
     }
     console.log(_text);
 }
@@ -89,7 +112,7 @@ async function getToken() {
         })
     });
     _token = rs.data;
-    log(`[GET Token]` + _token, false);
+    log(`[GET Token]` + _token);
 }
 
 async function checkImmunizationHistoryCID(cid) {
@@ -114,7 +137,7 @@ async function checkImmunizationHistoryCID(cid) {
                 const strVaccine_ref_name = v.visit_immunization[0].vaccine_ref_name.substring(a + 1, b);
                 // console.log(`moph_vaccine_ref_name: ${v.visit_immunization[0].vaccine_ref_name} | Vaccine_ref_name: ${strVaccine_ref_name}`);
                 let dose_no = ++i;
-                const manufacturer_id = await getVaccineManufacturerID(strVaccine_ref_name);
+                const manufacturer_id = await getVaccineManufacturerID(strVaccine_ref_name) || null;
                 const data = await {
                         cid: cid,
                         vaccine_dose_no: dose_no,
@@ -124,19 +147,18 @@ async function checkImmunizationHistoryCID(cid) {
                         vaccine_lot_number: v.visit_immunization[0].lot_number,
                         hospital_code: v.hospital_code,
                         hospital_name: v.hospital_name,
-                        visit_guid: v.visit_guid
+                        visit_guid: v.visit_guid,
+                        immunization_datetime: v.visit_immunization[0].immunization_datetime,
                     }
                     // console.log(`v.visit_immunization[0].vaccine_ref_name : ${v.visit_immunization[0].vaccine_ref_name.substring(a+1,b)}`);
                     // console.log(data);
                 const ck = await checkInsertDataHistory(cid, dose_no)
                     // console.log(ck.length);
-                if (ck.length == 0 && manufacturer_id != null) {
-                    log('[UPDATE] CID: ' + cid, false);
+                if (ck.length == 0) {
+                    log('[UPDATE] CID: ' + cid);
                     await model.insertDataHistory(dbHIS, data)
-                } else if (ck.length == 0 && manufacturer_id == null) {
-                    log('[NO UPDATE] manufacturer_id NULL' + cid, false);
                 } else {
-                    log(`[NO UPDATE] CID & DOSE Duplicate ${cid}[${dose_no}]`, false);
+                    log(`[NO UPDATE] CID & DOSE Duplicate ${cid}[${dose_no}]`);
                 }
             });
         } else {
@@ -160,9 +182,54 @@ async function getList() {
         await checkImmunizationHistoryCID(v.cid);
     }
     log('[END] getList...', false);
-    await getList();
+    // await getVaccineBookingTravel();
 
 }
+
+// async function getVaccineBookingTravel() {
+//     log('[START] getVaccineBookingTravel...', false);
+//     const rs = await model.getVaccineBookingTravel(db)
+//     log('[getVaccineBookingTravel] Patient COUNT: ' + rs.length);
+//     var i = 0;
+//     for await (const v of rs) {
+//         i = i + 1;
+//         log(`index loop : ${i}  [CID] : ${v.cid}`, false);
+//         await checkImmunizationHistoryCID(v.cid);
+//     }
+//     log('[END] getVaccineBookingTravel...', false);
+//     await getList();
+// }
+
+async function getVaccineBooking(table) {
+    const listTable = table.split(',')
+        // console.log(listTable);
+    for await (const v of listTable) {
+        log(`[START] TABLE[${v}]...`);
+        const rs = await model.getDataFormTable(db, v)
+        log('[COUNT] Patient: ' + rs.length);
+        var i = 0;
+        for await (const d of rs) {
+            i = i + 1;
+            log(`index loop : ${i}  [CID] : ${v.cid} | Table[${v}]`);
+            await checkImmunizationHistoryCID(d.cid);
+        }
+        log(`[END] TABLE[${v}]...`);
+    }
+    await getList();
+}
+
+async function getFixBug() {
+    const rs = await model.getFixBug(db);
+    log('[getFixBug] Patient COUNT: ' + rs[0].length);
+    var i = 0;
+    for await (const v of rs[0]) {
+        i = i + 1;
+        log(`index loop : ${i}  [CID] : ${v.cid}`, false);
+        await checkImmunizationHistoryCID(v.cid);
+    }
+}
+
+
 async function checkInsertDataHistory(cid, dose) {
     return await model.checkInsertDataHistory(dbHIS, cid, dose)
 }
@@ -172,7 +239,7 @@ async function getVaccineManufacturerID(text) {
         const rs = await model.getVaccineManufacturerID(dbHIS, text)
         return rs[0].vaccine_manufacturer_id
     } catch (error) {
-        console.log('[WARNING]: ' + error);
+        log('[WARNING]: ' + error);
     }
 }
 async function runJob() {
@@ -180,7 +247,11 @@ async function runJob() {
     log('[runJob]', false);
     await getToken();
     setTimeout(() => {
-        getList()
+        getVaccineBooking(process.env.TABLE_MULTIPLE)
+            // getList()
+            // getVaccineBookingTravel()        
+            // getFixBug()
+            // checkImmunizationHistoryCID('1200900099000') //TEST DEBUG
     }, 100);
 }
 runJob();
