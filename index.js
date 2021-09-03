@@ -227,6 +227,7 @@ async function getFixBug() {
         log(`index loop : ${i}  [CID] : ${v.cid}`, false);
         await checkImmunizationHistoryCID(v.cid);
     }
+    await getList()
 }
 
 
@@ -250,7 +251,7 @@ async function runJob() {
         getVaccineBooking(process.env.TABLE_MULTIPLE)
             // getList()
             // getVaccineBookingTravel()        
-            // getFixBug()
+        getFixBug()
             // checkImmunizationHistoryCID('1200900099000') //TEST DEBUG
     }, 100);
 }
