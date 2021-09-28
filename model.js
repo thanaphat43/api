@@ -26,7 +26,10 @@ module.exports = {
         return db(table)
     },
     getFixBug(db) {
-        const sql = 'SELECT cid, person_name, vaccine1_nickname, immunized1_datetime, vaccine2_nickname, immunized2_datetime, vaccine3_nickname, immunized3_datetime FROM immunized_person WHERE immunized_type_id=1 ORDER BY immunized1_datetime, immunized2_datetime, immunized3_datetime';
+        const sql = `SELECT * FROM immunized_person WHERE cid in (
+SELECT cid FROM immunized_person ip WHERE ip.vaccine1_nickname IS NULL AND ip.vaccine2_nickname IS NOT NULL
+UNION
+SELECT cid FROM immunized_person ip WHERE ip.vaccine2_nickname IS NULL AND ip.vaccine3_nickname IS NOT NULL)`;
         return db.raw(sql)
     }
 };

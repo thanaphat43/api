@@ -11,7 +11,7 @@
  Target Server Version : 50731
  File Encoding         : 65001
 
- Date: 19/08/2021 15:39:18
+ Date: 13/09/2021 19:54:16
 */
 
 SET NAMES utf8mb4;
@@ -32,8 +32,11 @@ CREATE TABLE `moph_vaccine_history_api`  (
   `hospital_code` varchar(8) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
   `hospital_name` varchar(200) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
   `visit_guid` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
+  `immunization_datetime` datetime(0) NULL DEFAULT NULL,
+  `target_group` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
+  `add_datetime` datetime(0) NULL DEFAULT CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`moph_vaccine_history_id`) USING BTREE,
   INDEX `ix_cid`(`cid`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 81069 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+) ENGINE = InnoDB AUTO_INCREMENT = 448269 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
 
 SET FOREIGN_KEY_CHECKS = 1;
