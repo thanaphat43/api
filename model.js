@@ -6,6 +6,7 @@ module.exports = {
             .where('m.cid', null)
             .where('p.cid', 'not like', '010733%')
             .where('p.death', '<>', 'Y')
+            .where('p.cid', '<>', '0000000000000')
     },
     checkInsertDataHistory(db, cid, dose) {
         return db(process.env.DB_HIS_TABLE_NAME_UPDATE)
