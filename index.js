@@ -63,7 +63,7 @@ var db = require("knex")({
 });
 
 app.use(bodyParser.json({ limit: "5mb" }));
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
 // @ts-ignore
@@ -82,7 +82,36 @@ app.get("/check/:cid", async(req, res) => {
         await checkToken();
         // const rs = await checkImmunizationHistoryCID(cid)
         // @ts-ignore
-        const response = await axios.get(`/api/ImmunizationHistory?cid=${cid}`, {
+        axios.get(`/api/ImmunizationHistory?cid=${cid}`, {
+                headers: {
+                    Authorization: `Bearer ${_token}`
+                },
+                httpsAgent: new https.Agent({
+                    rejectUnauthorized: false
+                })
+            }).then(function(response) {
+                // console.log(response)
+                res.send(response.data);
+            })
+            .catch(function(error) {
+                res.send({});
+                // console.log(error)
+                // res.send({ ok: false, rows: error });
+            })
+
+        // res.send(response);
+    } catch (error) {
+        // Handle Error Here
+        res.send({ ok: false, rows: error });
+    }
+});
+
+app.post("/send-message-to-user", async(req, res) => {
+    var data = req.body
+    try {
+        var data_rs = [];
+        await checkToken();
+        const response = await axios.post(`/api/SendMessageTarget`, data, {
             headers: {
                 Authorization: `Bearer ${_token}`
             },
@@ -90,12 +119,28 @@ app.get("/check/:cid", async(req, res) => {
                 rejectUnauthorized: false
             })
         });
-        res.send({ ok: true, rows: response.data.result });
+        console.log(response);
+        if (response.data) {
+            await data_rs.push({
+                ok: true,
+                status: true,
+                status_color: "success",
+                text: `ส่งการแจ้งเตือน สำเร็จ`
+            });
+        } else {
+            await data_rs.push({
+                ok: true,
+                status: false,
+                status_color: "error",
+                text: `ส่งการแจ้งเตือน ไม่สำเร็จ`
+            });
+        }
+        res.send(data_rs);
+
     } catch (error) {
-        // Handle Error Here
         res.send({ ok: false, rows: error });
     }
-});
+})
 
 app.get("/check-cvp-moph-todb/:cid", async(req, res) => {
     var cid = req.params.cid;
@@ -113,7 +158,9 @@ app.get("/check-cvp-moph-todb/:cid", async(req, res) => {
                 rejectUnauthorized: false
             })
         });
-        if (response.data.result.vaccine_certificate.length > 0) {
+        // console.log(response.data.result.vaccine_certificate);
+
+        if (response.data.result.vaccine_certificate) {
             var i = 0;
             for await (const v of response.data.result.patient.visit) {
                 const a = v.visit_immunization[0].vaccine_ref_name.indexOf("[");
@@ -161,7 +208,7 @@ app.get("/check-cvp-moph-todb/:cid", async(req, res) => {
                     log(`[NO UPDATE] CID & DOSE Duplicate ${cid}[${dose_no}] {${strVaccine_ref_name} - ${moment(v.visit_datetime).format("DD/MM/YYYY HH:mm:ss")}(${v.hospital_name})}`);
                 }
             }
-        } else if (response.data.result.vaccine_certificate.length == 0 && response.data.result.patient !== null) {
+        } else if (response.data.result.vaccine_certificate && response.data.result.patient !== null) {
             await data_rs.push({
                 ok: true,
                 status: false,
@@ -371,7 +418,7 @@ async function runJob() {
     await getToken();
     setTimeout(() => {
         // getFixBug();
-        getVaccineBooking(process.env.TABLE_MULTIPLE);
+        //getVaccineBooking(process.env.TABLE_MULTIPLE);
         // getList()
         // getVaccineBookingTravel()
         // checkImmunizationHistoryCID('1200900099000') //TEST DEBUG
