@@ -176,7 +176,7 @@ app.get("/check-cvp-moph-todb/:cid", async(req, res) => {
                 const data = await {
                     cid: cid,
                     vaccine_dose_no: dose_no,
-                    vaccine_datetime: v.visit_datetime,
+                    visit_datetime: v.visit_datetime,
                     vaccine_name: v.visit_immunization[0].vaccine_ref_name,
                     vaccine_manufacturer_id: manufacturer_id,
                     vaccine_lot_number: v.visit_immunization[0].lot_number,
@@ -308,7 +308,7 @@ async function checkImmunizationHistoryCID(cid) {
                 const data = await {
                     cid: cid,
                     vaccine_dose_no: dose_no,
-                    vaccine_datetime: v.visit_datetime,
+                    visit_datetime: v.visit_datetime,
                     vaccine_name: v.visit_immunization[0].vaccine_ref_name,
                     vaccine_manufacturer_id: manufacturer_id,
                     vaccine_lot_number: v.visit_immunization[0].lot_number,
