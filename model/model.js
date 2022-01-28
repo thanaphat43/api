@@ -27,10 +27,12 @@ module.exports = {
         return db(table)
     },
     getFixBug(db) {
-        const sql = `SELECT * FROM immunized_person WHERE cid in (
-SELECT cid FROM immunized_person ip WHERE ip.vaccine1_nickname IS NULL AND ip.vaccine2_nickname IS NOT NULL
-UNION
-SELECT cid FROM immunized_person ip WHERE ip.vaccine2_nickname IS NULL AND ip.vaccine3_nickname IS NOT NULL)`;
+        const sql = `SELECT * from moph_vaccine_history_api WHERE immunization_datetime is null`;
         return db.raw(sql)
+    },
+    updateDataHistory(db, data, moph_vaccine_history_id) {
+        return db('moph_vaccine_history_api')
+            .update(data)
+            .where('moph_vaccine_history_id', moph_vaccine_history_id)
     }
 };
